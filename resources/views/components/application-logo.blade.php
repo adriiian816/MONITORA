@@ -1,0 +1,1 @@
+<img src="{{ asset('tailadmin/images/logo-monitora.png') }}" alt="MONITORA Logo" class="w-20 h-20 object-contain">
