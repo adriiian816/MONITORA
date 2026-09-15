@@ -10,7 +10,12 @@
         </div>
     </x-slot>
 
-    <div class="space-y-6">
+    <!-- State Modal Catatan Revisi Menggunakan Alpine.js -->
+    <div x-data="{ 
+        showRevisionModal: false,
+        revisionActionUrl: '',
+        revisionNote: ''
+    }" class="space-y-6">
 
         <!-- Banner Selamat Datang -->
         <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
@@ -24,91 +29,200 @@
         </div>
 
         <!-- 4 Stat Cards Grid -->
-       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-    <!-- 1. TOTAL TUGAS -->
-    <a href="{{ route('admin.tasks.index') }}" 
-       style="display: block;"
-       class="w-full bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
-        <div class="flex items-center justify-between">
-            <div>
-                <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Total Tugas</span>
-                <h3 class="text-3xl font-bold text-slate-800 mt-1 group-hover:text-indigo-600 transition-colors">
-                    {{ $totalTugas ?? 0 }}
-                </h3>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
-                <i class="fa-solid fa-list-check text-xl"></i>
-            </div>
-        </div>
-        <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
-            <span>Tugas aktif dalam sistem</span>
-            <i class="fa-solid fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-        </div>
-    </a>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+            <!-- 1. TOTAL TUGAS -->
+            <a href="{{ route('admin.tasks.index') }}" class="block w-full bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Total Tugas</span>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1 group-hover:text-indigo-600 transition-colors">
+                            {{ $totalTugas ?? 0 }}
+                        </h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
+                        <i class="fa-solid fa-list-check text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
+                    <span>Tugas aktif dalam sistem</span>
+                    <i class="fa-solid fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                </div>
+            </a>
 
-    <!-- 2. TOTAL OPD -->
-    <a href="{{ route('admin.users.index') }}" 
-       style="display: block;"
-       class="w-full bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
-        <div class="flex items-center justify-between">
-            <div>
-                <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Total OPD</span>
-                <h3 class="text-3xl font-bold text-slate-800 mt-1 group-hover:text-indigo-600 transition-colors">
-                    {{ $totalOpd ?? 0 }}
-                </h3>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0">
-                <i class="fa-solid fa-building-user text-xl"></i>
-            </div>
-        </div>
-        <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
-            <span>Akun OPD terdaftar</span>
-            <i class="fa-solid fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-        </div>
-    </a>
+            <!-- 2. TOTAL OPD -->
+            <a href="{{ route('admin.users.index') }}" class="block w-full bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Total OPD</span>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1 group-hover:text-indigo-600 transition-colors">
+                            {{ $totalOpd ?? 0 }}
+                        </h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0">
+                        <i class="fa-solid fa-building-user text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
+                    <span>Akun OPD terdaftar</span>
+                    <i class="fa-solid fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                </div>
+            </a>
 
-    <!-- 3. DIKUMPULKAN -->
-    <a href="{{ route('admin.tasks.index', ['status' => 'submitted']) }}" 
-       style="display: block;"
-       class="w-full bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
-        <div class="flex items-center justify-between">
-            <div>
-                <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Dikumpulkan</span>
-                <h3 class="text-3xl font-bold text-emerald-600 mt-1">
-                    {{ $totalDikumpulkan ?? 0 }}
-                </h3>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all shrink-0">
-                <i class="fa-solid fa-circle-check text-xl"></i>
-            </div>
-        </div>
-        <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-emerald-600 font-medium flex items-center justify-between">
-            <span>Laporan Selesai</span>
-            <i class="fa-solid fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-        </div>
-    </a>
+            <!-- 3. DIKUMPULKAN -->
+            <a href="{{ route('admin.tasks.index', ['status' => 'submitted']) }}" class="block w-full bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Dikumpulkan</span>
+                        <h3 class="text-3xl font-bold text-emerald-600 mt-1">
+                            {{ $totalDikumpulkan ?? 0 }}
+                        </h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all shrink-0">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-emerald-600 font-medium flex items-center justify-between">
+                    <span>Laporan Selesai</span>
+                    <i class="fa-solid fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                </div>
+            </a>
 
-    <!-- 4. BELUM DIKUMPULKAN -->
-    <a href="{{ route('admin.tasks.index', ['status' => 'pending']) }}" 
-       style="display: block;"
-       class="w-full bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
-        <div class="flex items-center justify-between">
-            <div>
-                <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Belum Dikumpulkan</span>
-                <h3 class="text-3xl font-bold text-amber-600 mt-1">
-                    {{ $totalBelumDikumpulkan ?? 0 }}
-                </h3>
+            <!-- 4. BELUM DIKUMPULKAN -->
+            <a href="{{ route('admin.tasks.index', ['status' => 'pending']) }}" class="block w-full bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Belum Dikumpulkan</span>
+                        <h3 class="text-3xl font-bold text-amber-600 mt-1">
+                            {{ $totalBelumDikumpulkan ?? 0 }}
+                        </h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all shrink-0">
+                        <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-amber-600 font-medium flex items-center justify-between">
+                    <span>Menunggu Penyerahan</span>
+                    <i class="fa-solid fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Notification Alert -->
+        @if(session('success'))
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                <span>{{ session('success') }}</span>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all shrink-0">
-                <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+        @endif
+
+        <!-- Tabel Daftar Berkas Masuk dari OPD -->
+        <div class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden mb-6">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-file-arrow-up text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Berkas Masuk dari OPD</h3>
+                        <p class="text-xs text-slate-500">Daftar pengumpulan dokumen oleh OPD beserta aksi verifikasi status dan catatan revisi</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/70 border-b border-slate-200 text-[11px] uppercase tracking-wider font-semibold text-slate-600">
+                            <th class="py-3.5 px-5">Waktu Kirim</th>
+                            <th class="py-3.5 px-5">Nama OPD</th>
+                            <th class="py-3.5 px-5">Judul / Tugas</th>
+                            <th class="py-3.5 px-5 text-center">Status</th>
+                            <th class="py-3.5 px-5 text-center">Berkas</th>
+                            <th class="py-3.5 px-5 text-center">Aksi Verifikasi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                        @forelse($submissions ?? [] as $submission)
+                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                <td class="py-3.5 px-5 whitespace-nowrap text-slate-500">
+                                    <i class="fa-regular fa-clock mr-1.5 text-slate-400"></i>
+                                    {{ $submission->updated_at ? $submission->updated_at->format('d M Y, H:i') : '-' }}
+                                </td>
+                                <td class="py-3.5 px-5 font-semibold text-slate-800">
+                                    {{ $submission->user->name ?? 'OPD Tidak Ditemukan' }}
+                                </td>
+                                <td class="py-3.5 px-5">
+                                    <div class="font-medium text-slate-800">{{ $submission->task->title ?? $submission->title ?? 'Tugas OPD' }}</div>
+                                    @if($submission->catatan_revisi)
+                                        <div class="mt-1 text-[11px] text-rose-600 bg-rose-50 p-1.5 rounded border border-rose-100">
+                                            <strong>Catatan Revisi:</strong> {{ $submission->catatan_revisi }}
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="py-3.5 px-5 text-center">
+                                    @if($submission->status === 'disetujui')
+                                        <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] px-2.5 py-0.5 rounded-full font-medium">
+                                            <i class="fa-solid fa-circle-check text-emerald-500"></i> Disetujui
+                                        </span>
+                                    @elseif($submission->status === 'revisi')
+                                        <span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 text-[11px] px-2.5 py-0.5 rounded-full font-medium">
+                                            <i class="fa-solid fa-rotate-left text-rose-500"></i> Minta Revisi
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] px-2.5 py-0.5 rounded-full font-medium">
+                                            <i class="fa-solid fa-paper-plane text-indigo-500"></i> Dikirim
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="py-3.5 px-5 text-center whitespace-nowrap">
+                                    @if($submission->file_path)
+                                        <a href="{{ asset('storage/' . $submission->file_path) }}" target="_blank" class="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors mr-1">
+                                            <i class="fa-solid fa-external-link-alt text-slate-500"></i> Lihat
+                                        </a>
+                                        <a href="{{ asset('storage/' . $submission->file_path) }}" download class="inline-flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                                            <i class="fa-solid fa-download"></i> Unduh
+                                        </a>
+                                    @else
+                                        <span class="text-slate-400 italic">Belum Ada File</span>
+                                    @endif
+                                </td>
+                                <td class="py-3.5 px-5 text-center whitespace-nowrap">
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <!-- Tombol Setujui -->
+                                        <form action="{{ route('admin.submissions.update-status', $submission->id) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="status" value="disetujui">
+                                            <button type="submit" title="Setujui Berkas" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1">
+                                                <i class="fa-solid fa-check"></i> Setujui
+                                            </button>
+                                        </form>
+
+                                        <!-- Tombol Revisi (Memicu Modal Alpine.js) -->
+                                        <button 
+                                            @click="revisionActionUrl = '{{ route('admin.submissions.update-status', $submission->id) }}'; revisionNote = '{{ addslashes($submission->catatan_revisi ?? '') }}'; showRevisionModal = true" 
+                                            type="button"
+                                            title="Minta Revisi" 
+                                            class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1">
+                                            <i class="fa-solid fa-pen-to-square"></i> Revisi
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="py-12 text-center text-slate-400 bg-slate-50/30">
+                                    <div class="flex flex-col items-center justify-center gap-2">
+                                        <i class="fa-regular fa-folder-open text-3xl text-slate-300 mb-1"></i>
+                                        <p class="font-medium text-slate-500">Belum ada berkas tugas yang dikumpulkan oleh OPD.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
-        <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-amber-600 font-medium flex items-center justify-between">
-            <span>Menunggu Penyerahan</span>
-            <i class="fa-solid fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-        </div>
-    </a>
-</div>
 
         <!-- Tabel Riwayat Notifikasi Pengingat WhatsApp -->
         <div class="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
@@ -140,7 +254,7 @@
                             <tr class="hover:bg-slate-50/80 transition-colors">
                                 <td class="py-3.5 px-5 whitespace-nowrap text-slate-500">
                                     <i class="fa-regular fa-calendar-alt mr-1.5 text-slate-400"></i>
-                                    {{ $log->created_at->format('d M Y, H:i') }}
+                                    {{ $log->created_at ? $log->created_at->format('d M Y, H:i') : '-' }}
                                 </td>
                                 <td class="py-3.5 px-5 font-semibold text-slate-800">
                                     {{ $log->user->name ?? '-' }}
@@ -177,6 +291,46 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- MODAL: CATATAN REVISI (Menggunakan Alpine.js dengan transisi) -->
+        <div x-show="showRevisionModal" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4" 
+             style="display: none;"
+             x-cloak>
+            <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl" @click.away="showRevisionModal = false">
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Permintaan Revisi Berkas</h3>
+                <p class="text-xs text-slate-500 mb-4">Tuliskan instruksi atau bagian yang wajib diperbaiki oleh pihak OPD:</p>
+
+                <form :action="revisionActionUrl" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="status" value="revisi">
+                    
+                    <textarea 
+                        name="catatan_revisi" 
+                        x-model="revisionNote" 
+                        rows="4" 
+                        required 
+                        placeholder="Contoh: Lampiran berkas kurang lengkap atau Format PDF belum diisi TTD." 
+                        class="w-full text-xs rounded-xl border-slate-300 focus:border-amber-500 focus:ring-amber-500 p-3 mb-4"></textarea>
+
+                    <div class="flex items-center justify-end gap-2">
+                        <button type="button" @click="showRevisionModal = false" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-medium transition-colors">
+                            Kirim Catatan Revisi
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 

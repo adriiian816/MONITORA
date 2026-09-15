@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use App\Models\LoginHistory;
@@ -17,6 +18,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Paksa semua URL (Form action, Asset, Route) menggunakan HTTPS
+        URL::forceScheme('https');
+
         // Catat saat user LOGIN
         Event::listen(Login::class, function ($event) {
             LoginHistory::create([

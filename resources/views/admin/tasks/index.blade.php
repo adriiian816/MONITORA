@@ -1,19 +1,13 @@
 <x-app-layout>
+    <!-- Header bawaan dikosongkan agar tidak bentrok dengan layout Breeze -->
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Kelola Tugas') }}
-            </h2>
-            <a href="{{ route('admin.tasks.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                + Buat Tugas Baru
-            </a>
-        </div>
+        <div class="pt-4"></div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-4">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             
-            <!-- Alert Notifikasi dengan Auto-Hide 3 Detik & Fade Out -->
+            <!-- Alert Notifikasi dengan Auto-Hide -->
             @if (session('success') || session('status'))
                 <div x-data="{ show: true }" 
                      x-init="setTimeout(() => show = false, 3000)" 
@@ -21,68 +15,116 @@
                      x-transition:leave="transition ease-in duration-300"
                      x-transition:leave-start="opacity-100 transform translate-y-0"
                      x-transition:leave-end="opacity-0 transform -translate-y-2"
-                     class="mb-4 p-4 text-sm text-emerald-700 bg-emerald-100/80 border border-emerald-200 rounded-xl flex items-center justify-between shadow-sm"
+                     class="p-4 text-sm text-emerald-800 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-xl flex items-center justify-between shadow-sm"
                      role="alert">
-                    
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
                         <span class="font-medium">{{ session('success') ?? session('status') }}</span>
                     </div>
-
                     <button @click="show = false" class="text-emerald-500 hover:text-emerald-700 focus:outline-none">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
+                        <i class="fa-solid fa-xmark text-sm"></i>
                     </button>
                 </div>
             @endif
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul Tugas</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Dibuat</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse ($tasks as $index => $task)
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $index + 1 }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $task->title }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($task->deadline)->format('d-m-Y H:i') }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $task->created_at->format('d-m-Y H:i') }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                            <div class="flex justify-center items-center space-x-3">
-                                                <a href="{{ route('admin.tasks.show', $task) }}" class="text-blue-600 hover:text-blue-900 font-bold">Detail</a>
-                                                <a href="{{ route('admin.tasks.edit', $task) }}" class="text-indigo-600 hover:text-indigo-900 font-bold">Edit</a>
-                                                
-                                                <form action="{{ route('admin.tasks.destroy', $task) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tugas ini?');" class="inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
-                                            Belum ada tugas yang dibuat.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+            <!-- Main Content Card -->
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-2xl border border-gray-100">
+                
+                <!-- Page Title & Action Button Bar -->
+                <div class="p-6 sm:px-8 pt-8 pb-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="font-bold text-2xl text-gray-800 leading-tight flex items-center gap-2.5">
+                            <i class="fa-solid fa-clipboard-list text-indigo-600"></i> {{ __('Kelola Tugas') }}
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1">Daftar tugas atau monitoring yang diberikan kepada instansi/OPD.</p>
+                    </div>
+                    <a href="{{ route('admin.tasks.create') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4.5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 whitespace-nowrap">
+                        <i class="fa-solid fa-plus"></i> Buat Tugas Baru
+                    </a>
+                </div>
+
+                <!-- Card Header / Info Bar & Search -->
+                <div class="px-6 sm:px-8 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50">
+                    <div class="text-sm font-medium text-gray-600">
+                        Total Tugas: <span class="font-bold text-gray-900 bg-gray-200/60 px-2.5 py-1 rounded-full">{{ isset($tasks) ? $tasks->count() : 0 }} Tugas</span>
+                    </div>
+                    <div class="w-full sm:w-72">
+                        <input type="text" placeholder="Cari judul tugas..." class="w-full text-sm border-gray-300 rounded-xl shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                 </div>
+
+                <!-- Table Section -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-[11px] font-bold tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3.5 text-center w-16">No</th>
+                                <th class="px-6 py-3.5 text-left">Judul Tugas</th>
+                                <th class="px-6 py-3.5 text-left">Deadline</th>
+                                <th class="px-6 py-3.5 text-left">Tanggal Dibuat</th>
+                                <th class="px-6 py-3.5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100 text-sm">
+                            @forelse ($tasks as $index => $task)
+                                <tr class="hover:bg-indigo-50/30 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-center font-medium text-gray-500">
+                                        {{ $index + 1 }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs shadow-inner">
+                                                <i class="fa-solid fa-file-lines"></i>
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-gray-900">{{ $task->title }}</div>
+                                                <div class="text-xs text-gray-400">Monitoring BAPPEDA</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                                        <span class="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-xs font-medium">
+                                            <i class="fa-regular fa-clock text-amber-600"></i> {{ \Carbon\Carbon::parse($task->deadline)->format('d-m-Y H:i') }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-xs">
+                                        {{ $task->created_at->format('d-m-Y H:i') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <!-- Tombol Detail -->
+                                            <a href="{{ route('admin.tasks.show', $task) }}" title="Detail Tugas" class="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-all shadow-sm">
+                                                <i class="fa-solid fa-eye text-xs"></i>
+                                            </a>
+                                            <!-- Tombol Edit -->
+                                            <a href="{{ route('admin.tasks.edit', $task) }}" title="Edit Tugas" class="p-2 bg-sky-50 text-sky-600 hover:bg-sky-600 hover:text-white rounded-lg transition-all shadow-sm">
+                                                <i class="fa-solid fa-pen text-xs"></i>
+                                            </a>
+                                            <!-- Tombol Hapus -->
+                                            <form action="{{ route('admin.tasks.destroy', $task) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tugas ini?');" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" title="Hapus Tugas" class="p-2 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg transition-all shadow-sm">
+                                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+                                        <div class="flex flex-col items-center justify-center gap-2">
+                                            <i class="fa-solid fa-folder-open text-3xl text-gray-300"></i>
+                                            <p class="text-sm font-medium">Belum ada tugas yang dibuat.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
     </div>

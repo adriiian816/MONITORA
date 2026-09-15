@@ -29,6 +29,9 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
+    // PERBAIKAN: Dihapus prefix /admin di depannya karena sudah otomatis dari group prefix('admin')
+    Route::patch('/submissions/{id}/status', [AdminDashboardController::class, 'updateStatus'])->name('submissions.update-status');
+
     // Update Password OPD oleh Admin
     Route::put('/users/{user}/password', [UserController::class, 'updatePassword'])
         ->name('users.update-password');

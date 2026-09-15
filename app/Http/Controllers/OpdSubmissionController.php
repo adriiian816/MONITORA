@@ -2,82 +2,131 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Task;
-use App\Models\Submission;
-use App\Models\SubmissionHistory;
-use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Models\Submission;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Route;
 
 class OpdSubmissionController extends Controller
 {
     /**
-     * Menampilkan daftar pengumpulan tugas untuk OPD
+     * Menampilkan daftar berkas submission HANYA milik OPD yang sedang login.
      */
     public function index()
     {
-        /** @var User $user */
-        $user = Auth::user();
-
-        // Ambil data pengumpulan milik OPD yang sedang login beserta relasi tugasnya
-        $submissions = Submission::with(['task', 'histories'])
-            ->where('user_id', $user->id)
-            ->get();
-
+        // PERBAIKAN UTAMA: Tambahkan filter berdasarkan user_id yang sedang login
+        $submissions = Submission::where('user_id', Auth::id())->latest()->get();
+        
         return view('opd.submissions.index', compact('submissions'));
     }
 
     /**
-     * Mengunggah / Memperbarui Berkas Laporan OPD (Serta mencatat Riwayat Revisi)
+     * Menampilkan form untuk membuat submission baru.
      */
-    public function store(Request $request, Task $task)
+    public function create()
+    {
+        return view('opd.submissions.create');
+    }
+
+    /**
+     * Menyimpan submission baru ke database.
+     */
+    public function store(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:pdf,doc,docx,xlsx|max:10240', // Maksimal 10MB
+            'title' => 'required|string|max:255',
+            'file'  => 'required|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:20480',
         ]);
 
-        /** @var User $user */
-        $user = Auth::user();
-
-        $isLate = Carbon::now()->greaterThan($task->deadline);
-
-        $path = $request->file('file')->store('submissions', 'public');
-        $fileName = $request->file('file')->getClientOriginalName();
-
-        $existingSubmission = Submission::where('task_id', $task->id)
-            ->where('user_id', $user->id)
-            ->first();
-
-        if ($existingSubmission) {
-            // Catat berkas lama ke riwayat sebelum revisi
-            SubmissionHistory::create([
-                'submission_id' => $existingSubmission->id,
-                'file_path'     => $existingSubmission->file_path,
-                'file_name'     => $existingSubmission->file_name ?? 'Berkas Sebelumnya',
-                'notes'         => $existingSubmission->notes,
-            ]);
-
-            // Perbarui berkas dan reset status ke pending untuk verifikasi Admin
-            $existingSubmission->update([
-                'file_path' => $path,
-                'file_name' => $fileName,
-                'status'    => 'pending',
-                'notes'     => null,
-                'is_late'   => $isLate,
-            ]);
-        } else {
-            Submission::create([
-                'task_id'   => $task->id,
-                'user_id'   => $user->id,
-                'file_path' => $path,
-                'file_name' => $fileName,
-                'status'    => 'pending',
-                'is_late'   => $isLate,
-            ]);
+        $filePath = null;
+        if ($request->hasFile('file')) {
+            $filePath = $request->file('file')->store('submissions', 'public');
         }
 
-        return redirect()->back()->with('success', 'Berkas laporan berhasil dikirim.');
+        Submission::create([
+            'user_id'   => Auth::id(),
+            'title'     => $request->title,
+            'file_path' => $filePath,
+            'status'    => 'dikirim',
+        ]);
+
+        return redirect()->route('opd.submissions.index')->with('success', 'Berkas berhasil dikirim!');
+    }
+
+    /**
+     * Menampilkan rincian submission (Pastikan milik OPD yang login).
+     */
+    public function show(int|string $id)
+    {
+        // PERBAIKAN: Pastikan OPD hanya bisa melihat miliknya sendiri (mencegah akses via URL ID acak)
+        $submission = Submission::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        
+        return view('opd.submissions.show', compact('submission'));
+    }
+
+    /**
+     * Menampilkan halaman edit berkas.
+     */
+    public function edit(int|string $id)
+    {
+        $submission = Submission::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        
+        return view('opd.submissions.edit', compact('submission'));
+    }
+
+    /**
+     * Memproses pembaruan berkas/kirim ulang.
+     */
+    public function update(Request $request, int|string $id)
+    {
+        $submission = Submission::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+
+        $request->validate([
+            'title'     => 'nullable|string|max:255',
+            'file'      => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:20480',
+            'berkas'    => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:20480',
+            'file_path' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,zip|max:20480',
+        ]);
+
+        $uploadedFile = $request->file('file') ?? $request->file('berkas') ?? $request->file('file_path');
+
+        if ($uploadedFile) {
+            if ($submission->file_path && Storage::disk('public')->exists($submission->file_path)) {
+                Storage::disk('public')->delete($submission->file_path);
+            }
+
+            $submission->file_path = $uploadedFile->store('submissions', 'public');
+        }
+
+        if ($request->has('title')) {
+            $submission->title = $request->title;
+        }
+
+        $submission->status = 'dikirim';
+        $submission->save();
+
+        if (Route::has('opd.submissions.index')) {
+            return redirect()->route('opd.submissions.index')->with('success', 'Berkas berhasil dikirim!');
+        }
+
+        return redirect()->back()->with('success', 'Berkas berhasil dikirim!');
+    }
+
+    /**
+     * Menghapus submission.
+     */
+    public function destroy(int|string $id)
+    {
+        $submission = Submission::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+
+        if ($submission->file_path && Storage::disk('public')->exists($submission->file_path)) {
+            Storage::disk('public')->delete($submission->file_path);
+        }
+
+        $submission->delete();
+
+        return redirect()->route('opd.submissions.index')->with('success', 'Berkas berhasil dihapus.');
     }
 }

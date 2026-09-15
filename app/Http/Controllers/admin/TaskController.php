@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\Submission;
 use App\Models\User;
+use App\Services\WhatsAppService; // Import service WhatsApp
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -29,7 +30,7 @@ class TaskController extends Controller
     }
 
     /**
-     * Simpan tugas baru ke database dan bagikan secara otomatis ke seluruh akun OPD
+     * Simpan tugas baru ke database, bagikan ke seluruh OPD, dan kirim WhatsApp Fonnte
      */
     public function store(Request $request)
     {
@@ -46,17 +47,30 @@ class TaskController extends Controller
             'deadline'    => $request->deadline,
         ]);
 
-        // 2. Buat entri submission kosong untuk setiap user bernilai role 'opd'
+        // 2. Buat entri submission kosong untuk setiap user bernilai role 'opd' & Kirim WhatsApp
         $opdUsers = User::where('role', 'opd')->get();
+        
         foreach ($opdUsers as $opd) {
             Submission::create([
                 'task_id' => $task->id,
                 'user_id' => $opd->id,
                 'status'  => 'pending',
             ]);
+
+            // Kirim pesan WhatsApp notifikasi tugas baru + sertakan id user untuk log riwayat
+            if (!empty($opd->phone)) {
+                $pesan = "📢 *MONITORA BAPPEDA - TUGAS BARU*\n\n" .
+                         "Halo *{$opd->name}*,\n\n" .
+                         "Admin BAPPEDA baru saja memberikan tugas baru:\n" .
+                         "📌 *Judul:* {$task->title}\n" .
+                         "⏳ *Deadline:* {$task->deadline}\n\n" .
+                         "Silakan login ke platform MONITORA untuk mengunggah berkas laporan Anda.";
+
+                WhatsappService::send($opd->phone, $pesan, $opd->id);
+            }
         }
 
-        return redirect()->route('admin.tasks.index')->with('success', 'Tugas berhasil dibuat dan dibagikan ke seluruh OPD.');
+        return redirect()->route('admin.tasks.index')->with('success', 'Tugas berhasil dibuat, dibagikan ke OPD, dan WhatsApp terkirim.');
     }
 
     /**
@@ -108,21 +122,43 @@ class TaskController extends Controller
     }
 
     /**
-     * Verifikasi Status Laporan oleh Admin BAPPEDA (ACC / Revisi)
+     * Verifikasi Status Laporan oleh Admin BAPPEDA (ACC / Revisi) + Kirim WhatsApp
      */
     public function verifySubmission(Request $request, Submission $submission)
     {
         $request->validate([
-            'status' => 'required|in:approved,revision',
-            'notes'  => 'nullable|string',
+            'status'         => 'required|in:disetujui,revisi,pending',
+            'catatan_revisi' => 'nullable|string',
         ]);
 
         $submission->update([
-            'status' => $request->status,
-            'notes'  => $request->notes,
+            'status'         => $request->status,
+            'catatan_revisi' => $request->catatan_revisi,
         ]);
 
-        return redirect()->back()->with('success', 'Status verifikasi berhasil diperbarui.');
+        // Kirim WhatsApp pemberitahuan ke OPD bersangkutan
+        $opdUser = $submission->user;
+        $taskTitle = $submission->task->title ?? 'Tugas OPD';
+
+        if ($opdUser && !empty($opdUser->phone)) {
+            if ($request->status === 'revisi') {
+                $pesan = "⚠️ *MONITORA BAPPEDA - PERMINTAAN REVISI*\n\n" .
+                         "Halo *{$opdUser->name}*,\n\n" .
+                         "Berkas untuk tugas (*{$taskTitle}*) perlu diperbaiki/revisi.\n\n" .
+                         "*Catatan Admin:* _{$request->catatan_revisi}_\n\n" .
+                         "Silakan periksa kembali dan unggah perbaikannya di sistem MONITORA.";
+            } elseif ($request->status === 'disetujui') {
+                $pesan = "✅ *MONITORA BAPPEDA - BERKAS DISETUJUI*\n\n" .
+                         "Halo *{$opdUser->name}*,\n\n" .
+                         "Kabar baik! Berkas tugas (*{$taskTitle}*) telah *DISETUJUI* oleh Admin BAPPEDA.";
+            }
+
+            if (isset($pesan)) {
+                WhatsAppService::send($opdUser->phone, $pesan, $opdUser->id);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Status verifikasi berhasil diperbarui & WhatsApp terkirim.');
     }
 
     /**

@@ -1,77 +1,142 @@
 <x-app-layout>
+    <!-- Header bawaan dikosongkan/diperkecil agar tidak bentrok -->
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Kelola Akun OPD') }}
-            </h2>
-            <a href="{{ route('admin.users.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                + Tambah Akun OPD
-            </a>
-        </div>
+        <div class="pt-4"></div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-4">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            
+            <!-- Alert Notifikasi -->
             @if (session('success'))
-                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-                    <span class="block sm:inline">{{ session('success') }}</span>
+                <div x-data="{ show: true }" 
+                     x-init="setTimeout(() => show = false, 3000)" 
+                     x-show="show" 
+                     x-transition:leave="transition ease-in duration-300"
+                     class="p-4 text-sm text-emerald-800 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-xl flex items-center justify-between shadow-sm"
+                     role="alert">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+                        <span class="font-medium">{{ session('success') }}</span>
+                    </div>
+                    <button @click="show = false" class="text-emerald-500 hover:text-emerald-700 focus:outline-none">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
                 </div>
             @endif
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama OPD / Instansi</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nomor WhatsApp</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Dibuat</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse ($opdUsers as $index => $user)
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $index + 1 }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $user->name }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $user->email }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $user->phone ?? '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $user->created_at->format('d-m-Y H:i') }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                            <div class="flex justify-center items-center space-x-3">
-                                                <!-- Tombol Edit -->
-                                                <a href="{{ route('admin.users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900 font-bold">Edit</a>
-                                                
-                                                <!-- Tombol Reset Password -->
-                                                <button type="button" 
-                                                    onclick="openPasswordModal('{{ $user->id }}', '{{ $user->name }}')"
-                                                    class="text-amber-600 hover:text-amber-900 font-bold">
-                                                    Reset Password
-                                                </button>
+            <!-- Main Content Card -->
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-2xl border border-gray-100">
+                
+                <!-- Page Title & Action Button Bar (Dipindah ke dalam card agar posisinya pas & rapi) -->
+                <div class="p-6 sm:px-8 pt-8 pb-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="font-bold text-2xl text-gray-800 leading-tight flex items-center gap-2.5">
+                            <i class="fa-solid fa-building-user text-indigo-600"></i> {{ __('Kelola Akun OPD') }}
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1">Daftar instansi/OPD yang terdaftar di sistem monitoring BAPPEDA.</p>
+                    </div>
+                    <a href="{{ route('admin.users.create') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4.5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 whitespace-nowrap">
+                        <i class="fa-solid fa-plus"></i> Tambah Akun OPD
+                    </a>
+                </div>
 
-                                                <!-- Tombol Hapus -->
-                                                <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun OPD ini?');" class="inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
-                                            Belum ada akun OPD yang dibuat.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                <!-- Card Header / Info Bar & Search -->
+                <div class="px-6 sm:px-8 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50">
+                    <div class="text-sm font-medium text-gray-600">
+                        Total Instansi: <span class="font-bold text-gray-900 bg-gray-200/60 px-2.5 py-1 rounded-full">{{ isset($opdUsers) ? $opdUsers->count() : 0 }} OPD</span>
+                    </div>
+                    <div class="w-full sm:w-72">
+                        <input type="text" placeholder="Cari nama OPD atau email..." class="w-full text-sm border-gray-300 rounded-xl shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                 </div>
+
+                <!-- Table Section -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-[11px] font-bold tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3.5 text-center w-16">No</th>
+                                <th class="px-6 py-3.5 text-left">Nama OPD / Instansi</th>
+                                <th class="px-6 py-3.5 text-left">Email</th>
+                                <th class="px-6 py-3.5 text-left">Nomor WhatsApp</th>
+                                <th class="px-6 py-3.5 text-left">Tanggal Dibuat</th>
+                                <th class="px-6 py-3.5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100 text-sm">
+                            @forelse ($opdUsers as $index => $user)
+                                <tr class="hover:bg-indigo-50/30 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-center font-medium text-gray-500">
+                                        {{ $index + 1 }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs shadow-inner">
+                                                {{ strtoupper(substr($user->name, 0, 2)) }}
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-gray-900">{{ $user->name }}</div>
+                                                <div class="text-xs text-gray-400">Instansi Pemerintah</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                                        <div class="flex items-center gap-1.5">
+                                            <i class="fa-regular fa-envelope text-gray-400 text-xs"></i>
+                                            {{ $user->email }}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                                        @if($user->phone)
+                                            <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg text-xs font-medium">
+                                                <i class="fa-brands fa-whatsapp text-emerald-600"></i> {{ $user->phone }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-400 italic text-xs">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-xs">
+                                        {{ $user->created_at->format('d-m-Y H:i') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <!-- Tombol Edit -->
+                                            <a href="{{ route('admin.users.edit', $user) }}" title="Edit Akun" class="p-2 bg-sky-50 text-sky-600 hover:bg-sky-600 hover:text-white rounded-lg transition-all shadow-sm">
+                                                <i class="fa-solid fa-pen text-xs"></i>
+                                            </a>
+                                            <!-- Tombol Reset Password -->
+                                            <button type="button" 
+                                                onclick="openPasswordModal('{{ $user->id }}', '{{ $user->name }}')"
+                                                title="Reset Password" 
+                                                class="p-2 bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white rounded-lg transition-all shadow-sm">
+                                                <i class="fa-solid fa-key text-xs"></i>
+                                            </button>
+                                            <!-- Tombol Hapus -->
+                                            <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun OPD ini?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" title="Hapus Akun" class="p-2 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg transition-all shadow-sm">
+                                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-400">
+                                        <div class="flex flex-col items-center justify-center gap-2">
+                                            <i class="fa-solid fa-folder-open text-3xl text-gray-300"></i>
+                                            <p class="text-sm font-medium">Belum ada akun OPD yang dibuat.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
     </div>
